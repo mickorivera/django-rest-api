@@ -42,7 +42,6 @@ class UserStatus(generics.UpdateAPIView):
         return User.objects.get(id=id)
 
     def patch(self, request, *args, **kwargs):
-        print(request.auth)
         token = kwargs.pop('token')
         token_decoder = TokenDecoder()
         payload = token_decoder.decode(token)
@@ -53,7 +52,7 @@ class UserStatus(generics.UpdateAPIView):
             new_user.save()
             return Response(new_user.data)
         else:
-            return Response("wrong parameters")
+            return Response({"is_active": "Invalid value"})
 
 
 class UserPassword(generics.UpdateAPIView):

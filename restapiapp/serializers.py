@@ -8,6 +8,9 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         model = User
         fields = ('email', 'password', 'first_name', 'last_name', 'is_active', 'url',)
         read_only_fields = ('is_active',)
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
 
     def create(self, validated_data):
         user = User(
@@ -17,12 +20,18 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         user.save()
         return user
 
+
 class RestrictedUserSerializer(serializers.HyperlinkedModelSerializer):
     
     class Meta:
         model = User
         fields = ('email', 'password', 'first_name', 'last_name', 'is_active', 'url',)
         read_only_fields = ('is_active',)
+        extra_kwargs = {
+            'password': {'write_only': True},
+            'email': {'write_only': True},
+            'first_name': {'write_only': True}
+        }
 
     def create(self, validated_data):
         user = User(
