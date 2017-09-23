@@ -6,6 +6,7 @@ from .models import User
 from .serializers import UserSerializer, RestrictedUserSerializer, UserStatusSerializer, \
     UserPasswordSerializer, UserDetailSerializer, RestrictedUserDetailSerializer
 from .utils.auth_token import Generator as TokenGenerator,  Decoder as TokenDecoder
+from .utils.email import Sender as EmailSender
 
 
 class UserList(generics.ListCreateAPIView):
@@ -18,7 +19,8 @@ class UserList(generics.ListCreateAPIView):
         user = serializer.save(password=password)
         token_generator = TokenGenerator()
         token = token_generator.generate(user)
-        print(token) # TODO: send this to user email address
+        email_sender = EmailSender()
+        email_sender.send('token = {}'.format(token), self.request.data['email'])
 
     def get_serializer_class(self):
         if self.request.user.is_authenticated():
