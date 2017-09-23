@@ -1,6 +1,7 @@
-from django.core.exceptions import PermissionDenied
+from django.contrib.auth.hashers import make_password
 from rest_framework import generics, permissions
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 from .models import User
 from .serializers import UserSerializer, RestrictedUserSerializer, UserStatusSerializer, \
     UserPasswordSerializer, UserDetailSerializer, RestrictedUserDetailSerializer
@@ -13,10 +14,11 @@ class UserList(generics.ListCreateAPIView):
     permission_classes = (permissions.AllowAny,)
 
     def perform_create(self, serializer):
-    	user = serializer.save()
-    	token_generator = TokenGenerator()
-    	token = token_generator.generate(user)
-    	print(token) # TODO: send this to user email address
+        password = make_password(self.request.data['password'])
+        user = serializer.save(password=password)
+        token_generator = TokenGenerator()
+        token = token_generator.generate(user)
+        print(token) # TODO: send this to user email address
 
     def get_serializer_class(self):
         if self.request.user.is_authenticated():
@@ -38,15 +40,13 @@ class UserDetail(generics.RetrieveAPIView):
 class UserStatus(generics.UpdateAPIView):
     permission_classes = (permissions.AllowAny, )
 
-    def _get_object(self, id):
-        return User.objects.get(id=id)
-
-    def patch(self, request, *args, **kwargs):
-        token = kwargs.pop('token')
+    def _get_object(self, token):
         token_decoder = TokenDecoder()
         payload = token_decoder.decode(token)
+        return User.objects.get(id=payload.get('user_id'))
 
-        user = self._get_object(id=payload.get('user_id'))
+    def patch(self, request, token):
+        user = self._get_object(token)
         new_user = UserStatusSerializer(user, data=request.data, partial=True)
         if new_user.is_valid():
             new_user.save()
@@ -58,7 +58,6 @@ class UserStatus(generics.UpdateAPIView):
 class UserPassword(generics.UpdateAPIView):
     queryset = User.objects.all()
     serializer_class = UserPasswordSerializer
-    permission_classes = (permissions.IsAuthenticated, )
     
     def perform_update(self, serializer):
         if self.request.user == serializer.instance:

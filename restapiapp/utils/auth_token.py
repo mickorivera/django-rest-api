@@ -1,4 +1,5 @@
 import jwt
+from rest_framework.exceptions import PermissionDenied, AuthenticationFailed, NotAuthenticated
 from rest_framework_jwt.settings import api_settings
 
 
@@ -12,22 +13,20 @@ class Generator:
         token = self._jwt_encode_handler(payload)
         return token
 
+
 class Decoder:
     def __init__(self):
         self._jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 
     def decode(self, token):
-        # try:
-            # payload = self._jwt_decode_handler(token)
-        # except jwt.ExpiredSignature:
-        #     msg = _('Signature has expired.')
-        #     # raise exceptions.AuthenticationFailed(msg)
-        # except jwt.DecodeError:
-        #     msg = _('Error decoding signature.')
-            # raise exceptions.AuthenticationFailed(msg)
-        # except jwt.InvalidTokenError:
-            # raise exceptions.AuthenticationFailed()
+        try:
+            payload = self._jwt_decode_handler(token)
+        except jwt.ExpiredSignature:
+            raise PermissionDenied
+        except jwt.DecodeError:
+            raise AuthenticationFailed
+        except jwt.InvalidTokenError:
+            raise NotAuthenticated
 
-        # return payload
-        return self._jwt_decode_handler(token)
+        return payload
         
