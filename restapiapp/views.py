@@ -1,5 +1,5 @@
 from django.contrib.auth.hashers import make_password
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from .models import User
@@ -42,19 +42,21 @@ class UserDetail(generics.RetrieveAPIView):
 class UserStatus(generics.UpdateAPIView):
     permission_classes = (permissions.AllowAny, )
 
-    def _get_object(self, token):
+    def _extract_user_id(self, token):
         token_decoder = TokenDecoder()
         payload = token_decoder.decode(token)
-        return User.objects.get(id=payload.get('user_id'))
+        return payload.get('user_id')
 
-    def patch(self, request, token):
-        user = self._get_object(token)
-        new_user = UserStatusSerializer(user, data=request.data, partial=True)
+    def patch(self, request, pk):
+        user_id = self._extract_user_id(self.request.data.get('token'))
+        if str(user_id) != str(pk):
+            return Response({'token': ['token not valid']}, status=status.HTTP_400_BAD_REQUEST)
+        user = User.objects.get(id=pk)
+        data = {'is_active': True}
+        new_user = UserStatusSerializer(user, data=data, partial=True)
         if new_user.is_valid():
             new_user.save()
-            return Response(new_user.data)
-        else:
-            return Response({"is_active": "Invalid value"})
+        return Response(new_user.data)
 
 
 class UserPassword(generics.UpdateAPIView):

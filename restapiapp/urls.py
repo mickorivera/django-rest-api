@@ -7,7 +7,7 @@ urlpatterns = format_suffix_patterns([
         UserList.as_view(),
         name='user-list'),
 
-    url(r'^user/status/(?P<token>.+?)/$',
+    url(r'^user/(?P<pk>[0-9]+)/is_active/$',
         UserStatus.as_view(),
         name='user-status'),
 
