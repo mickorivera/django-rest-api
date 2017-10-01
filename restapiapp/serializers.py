@@ -12,6 +12,21 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
             'password': {'write_only': True}
         }
 
+    def create(self, validated_data):
+        user = User(**validated_data)
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
+
+    def update(self, instance, validated_data):
+        for attr, value in validated_data.items():
+            if attr == 'password':
+                instance.set_password(value)
+            else:
+                setattr(instance, attr, value)
+        instance.save()
+        return instance
+
 
 class RestrictedUserSerializer(serializers.HyperlinkedModelSerializer):
     
@@ -25,19 +40,11 @@ class RestrictedUserSerializer(serializers.HyperlinkedModelSerializer):
             'last_name': {'write_only': True}
         }
 
-
-class UserDetailSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = User
-        fields = ('email', 'first_name', 'last_name', 'is_active',)
-
-
-class RestrictedUserDetailSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = User
-        fields = ('first_name', 'is_active',)
+    def create(self, validated_data):
+        user = User(**validated_data)
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
 
 
 class UserStatusSerializer(serializers.ModelSerializer):
@@ -45,17 +52,4 @@ class UserStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('first_name', 'is_active',)
-        read_only_fields = ('first_name',)
-
-
-class UserPasswordSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = User
-        fields = ('email', 'password', 'first_name', 'last_name', 'is_active',)
-        read_only_fields = ('email', 'is_active', 'first_name', 'last_name')
-
-    def update(self, instance, validated_data):
-        instance.set_password(validated_data['password'])
-        instance.save()
-        return instance
+        read_only_fields = ('first_name', )

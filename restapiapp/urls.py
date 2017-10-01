@@ -1,21 +1,26 @@
 from django.conf.urls import url
 from rest_framework.urlpatterns import format_suffix_patterns
-from .views import UserList, UserStatus, UserPassword, UserDetail
+from .views import UserViewSet
 
 urlpatterns = format_suffix_patterns([
     url(r'^user/$',
-        UserList.as_view(),
+        UserViewSet.as_view({
+                'post': 'create',
+                'get': 'list'
+            }),
         name='user-list'),
 
+    url(r'^user/(?P<pk>[0-9]+)/$',
+        UserViewSet.as_view({
+                'get': 'retrieve',
+                'patch': 'partial_update'
+            }),
+        name='user-detail'),
+
     url(r'^user/(?P<pk>[0-9]+)/is_active/$',
-        UserStatus.as_view(),
+        UserViewSet.as_view({
+                'patch': 'activate'
+            }),
         name='user-status'),
 
-    url(r'^user/(?P<pk>[0-9]+)/password/$',
-        UserPassword.as_view(),
-        name='user-password'),
-    
-    url(r'^user/(?P<pk>[0-9]+)/$',
-        UserDetail.as_view(),
-        name='user-detail'),
 ])
